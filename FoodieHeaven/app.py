@@ -1,7 +1,7 @@
 import streamlit as st
 import pandas as pd
 import re
-from thefuzz import fuzz 
+from rapidfuzz import fuzz  
 
 # Load and cache CSV data
 @st.cache_data
@@ -10,7 +10,7 @@ def load_data():
     df.dropna(subset=['Ingredients', 'Recipe Name', 'Instructions'], inplace=True)
     return df
 
-# Clean ingredients by removing units, numbers, and symbols
+# Clean ingredients
 def clean_ingredients(text):
     text = re.sub(r'\d+', '', text)  # Remove numbers
     text = re.sub(r'\b(cup|cups|tbsp|tablespoon|tsp|teaspoon|gm|g|kg|ml|ltr|litre|pinch|clove|piece|slices?)\b',
@@ -18,7 +18,7 @@ def clean_ingredients(text):
     text = re.sub(r'[^\w\s,]', '', text)  # Remove punctuation
     return [i.strip().lower() for i in text.split(",") if i.strip()]
 
-# Fuzzy matching with tolerance
+# Match ingredients using fuzzy logic
 def fuzzy_match(user_ings, recipe_ings):
     matched = set()
     for u in user_ings:
@@ -28,7 +28,7 @@ def fuzzy_match(user_ings, recipe_ings):
                 break
     return matched
 
-# Recipe recommendation logic
+# Recommend recipes
 def recommend_recipes(user_input, df):
     user_ings = clean_ingredients(user_input)
     if not user_ings:
