@@ -1,34 +1,32 @@
 import streamlit as st
 import pandas as pd
 import re
-from rapidfuzz import fuzz  
 
-# Load and cache CSV data
+# Load dataset
 @st.cache_data
 def load_data():
     df = pd.read_csv("IndianFoodDataset.csv", encoding='ISO-8859-1')
     df.dropna(subset=['Ingredients', 'Recipe Name', 'Instructions'], inplace=True)
     return df
 
-# Clean ingredients
+# Clean ingredients: remove numbers, units, and symbols
 def clean_ingredients(text):
-    text = re.sub(r'\d+', '', text)  # Remove numbers
-    text = re.sub(r'\b(cup|cups|tbsp|tablespoon|tsp|teaspoon|gm|g|kg|ml|ltr|litre|pinch|clove|piece|slices?)\b',
-                  '', text, flags=re.IGNORECASE)
-    text = re.sub(r'[^\w\s,]', '', text)  # Remove punctuation
+    text = re.sub(r'\d+', '', text)
+    text = re.sub(r'\b(cup|cups|tbsp|tablespoon|tsp|teaspoon|gm|g|kg|ml|ltr|litre|pinch|clove|piece|slices?)\b', '', text, flags=re.IGNORECASE)
+    text = re.sub(r'[^\w\s,]', '', text)
     return [i.strip().lower() for i in text.split(",") if i.strip()]
 
-# Match ingredients using fuzzy logic
-def fuzzy_match(user_ings, recipe_ings):
+# Basic matching logic (case-insensitive substring match)
+def match_ingredients(user_ings, recipe_ings):
     matched = set()
     for u in user_ings:
         for r in recipe_ings:
-            if fuzz.token_set_ratio(u, r) >= 80:
+            if u in r or r in u:
                 matched.add(r)
                 break
     return matched
 
-# Recommend recipes
+# Recommendation logic
 def recommend_recipes(user_input, df):
     user_ings = clean_ingredients(user_input)
     if not user_ings:
@@ -37,7 +35,7 @@ def recommend_recipes(user_input, df):
     recommendations = []
     for _, row in df.iterrows():
         recipe_ings = clean_ingredients(row['Ingredients'])
-        matched = fuzzy_match(user_ings, recipe_ings)
+        matched = match_ingredients(user_ings, recipe_ings)
         if matched:
             percent = (len(matched) / len(user_ings)) * 100
             if percent >= 60:
@@ -49,7 +47,7 @@ def recommend_recipes(user_input, df):
 
 # Streamlit UI
 st.set_page_config(page_title="Smart Recipe Recommender", layout="wide")
-st.title("🍛 Smart Recipe Recommender System")
+st.title("🍽️ Smart Recipe Recommender System")
 
 df = load_data()
 
