@@ -1,7 +1,7 @@
 import streamlit as st
 import pandas as pd
 import re
-from thefuzz import fuzz  # Replaced fuzzywuzzy with thefuzz
+from thefuzz import fuzz 
 
 # Load and cache CSV data
 @st.cache_data
